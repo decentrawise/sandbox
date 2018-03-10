@@ -1,0 +1,237 @@
+#!/bin/bash
+
+EOS_HOME=/home/miguel/eos-data
+EOS_PROGRAMS=$HOME/build/eos/build/programs
+EOS_BUILD=$HOME/build/eos/build/tools/eoscpp
+EOS_WALLET_INFO=$HOME/wallet_info
+EOS_CONTRACTS=$HOME/source/contracts
+
+export BOOST_ROOT=$HOME/opt/boost_1_64_0
+export BINARYEN_ROOT=~/opt/binaryen
+
+# alias eosioc=/home/miguel/build/eos/build/programs/eosioc/eosioc
+# alias eosiod=/home/miguel/build/eos/build/programs/eosiod/eosiod
+alias eosioc=/home/miguel/build/eos/build/programs/eosc/eosc
+alias eosiod=/home/miguel/build/eos/build/programs/eosd/eosd
+alias eoscpp=/home/miguel/build/eos/build/tools/eoscpp
+
+
+alias rebash="source $HOME/.bashrc"
+
+alias eosio_server_start="eosiod --data-dir=$EOS_HOME/data-dir --config=$EOS_HOME/config.ini --wallet-dir=$EOS_HOME/wallets"
+
+function eosio_server_reset
+{
+    echo "Resetting the blockchain..."
+    rm -rf $EOS_WALLET_INFO/*
+    rm -rf $EOS_HOME/wallets/*
+    eosio_server_start --resync-blockchain &
+    sleep 2
+    killall eosd
+    
+    eosio_server_start
+}
+
+function eosio_server_initialize
+{
+    echo "Setup default wallet..."
+    eosio_wallet_create default
+    eosio_wallet_unlock default
+
+    echo "Importing inita key into 'default' wallet"
+    eosioc wallet import -n default 5KQwrPbwdL6PhXujxW37FSSQZ1JiwsST4cqQzDeyXtP79zkvFD3
+    
+    echo "Creating default usersa..."
+    eosio_account_create inita usera
+
+    echo "Creating default usersb..."
+    eosio_account_create inita userb
+}
+
+function eos_get_key
+{
+    if [ "$3" == "" ] && [ "$2" != "wallet" ]; then echo "eos_get_key <account_name> <key[owner|active|...]> <type[public|private]>"; return; fi
+    
+    account=$1
+    key=$2
+    key_type=$3
+
+    if [ "$2" == "wallet" ]; then cat $EOS_WALLET_INFO/$account/wallet_key; return; fi
+    
+    file=$EOS_WALLET_INFO/$account/key_$key
+    cat $file | grep -i $key_type | grep -oE '[^ ]+$'
+}
+
+function create_default_keys
+{
+    if [ "$1" == "" ]; then echo "create_default_keys <account_name>"; return; fi
+
+    account_name=$1
+    wallet_info_dir=$EOS_WALLET_INFO/$account_name
+    mkdir -p $wallet_info_dir
+
+    # Create owner and active key pairs
+    if [ ! -f $account_wallet/key_owner ]; then
+            echo "Creating owner key..."
+            eosioc create key > $wallet_info_dir/key_owner
+    fi
+
+    if [ ! -f $account_wallet/key_active ]; then
+            echo "Creating active key..."
+            eosioc create key > $wallet_info_dir/key_active
+    fi
+}
+
+function eosio_wallet_create
+{
+    if [ "$1" == "" ]; then echo "eosio_wallet_create <account_name>"; return 1; fi
+
+    account_name=$1
+
+    wallet_dir=$EOS_WALLET_INFO/$account_name
+    mkdir -p $wallet_dir
+
+    if [ -f $wallet_dir/wallet_key ]; then echo "Wallet password file already exists."; return 2; fi
+    echo "Creating wallet..."
+    result=`eosioc wallet create -n $account_name`
+    result=`echo "$result" | grep PW`
+    result=`echo "$result"| sed -e 's/^"//' -e 's/"$//'`
+    echo "$result" > $wallet_dir/wallet_key
+}
+
+function eosio_wallet_unlock
+{
+    if [ "$1" == "" ]; then echo "eosio_wallet_unlock <account_name>"; return; fi
+
+    account_name=$1
+    
+    eosioc wallet open -n $account_name
+    wallet_password=`eos_get_key $account_name wallet`
+    eosioc wallet unlock -n $account_name --password=$wallet_password
+}
+
+function eosio_account_create
+{
+    if [ "$1" == "" ] || [ "$2" == "" ]; then echo "eosio_account_create <creator_account> <account_name>"; return; fi
+    
+    creator_account=$1
+    account_name=$2
+
+    create_default_keys $account_name
+    eosio_wallet_create $account_name
+
+    owner_public_key=`eos_get_key $account_name owner public`
+    owner_private_key=`eos_get_key $account_name owner private`
+    active_public_key=`eos_get_key $account_name active public`
+    active_private_key=`eos_get_key $account_name active private`
+    wallet_password=`eos_get_key $account_name wallet`
+
+    echo "Adding keys to wallet..."
+    eosioc wallet open -n $account_name
+    
+    echo "Unlocking wallet with $wallet_password"
+    eosio_wallet_unlock $account_name
+    eosioc wallet import -n $account_name $owner_private_key
+    eosioc wallet import -n $account_name $active_private_key 
+   
+    echo "Adding inita key to wallet..."
+    eosioc wallet import -n $account_name 5KQwrPbwdL6PhXujxW37FSSQZ1JiwsST4cqQzDeyXtP79zkvFD3
+
+    echo "Creating account..."
+    eosioc create account $creator_account $account_name $owner_public_key $active_public_key
+}
+
+function eosio_contract_create
+{
+    if [ "$1" == "" ] || [ "$2" == "" ]; then echo "eosio_account_create <creator_account> <account_name>"; return; fi
+    creator_account=$1
+    contract_name=$2
+
+    echo "Creating contract $contract_name"
+    
+    eosio_wallet_unlock default
+    
+    eosio_account_create $creator_account $contract_name
+    eosio_wallet_unlock $contract_name
+
+    echo "Prepare contract skeleton code"
+    pushd $EOS_CONTRACTS
+    eoscpp -n $contract_name
+    pushd $contract_name
+    rm $contract_name.abi
+    eoscpp -g $contract_name.abi $contract_name.hpp
+    eoscpp -o $contract_name.wast $contract_name.cpp
+    popd
+    popd
+}
+
+function eosio_contract_install
+{
+    if [ "$1" == "" ]; then contract_name=${PWD##*/}; else contract_name=$1; fi
+
+    pushd $EOS_CONTRACTS/$contract_name
+
+    echo "Building the contract..."
+    eoscpp -o $contract_name.wast $contract_name.cpp
+    if [ $? != 0 ]; then echo "Failed to build contract"; popd; return 1; fi
+
+    echo "Unlocking wallets for 'default' and '$contract_name'"
+    eosio_wallet_unlock default
+    eosio_wallet_unlock $contract_name
+    
+    echo "Installing the contract..."
+    eosioc set contract $contract_name $contract_name.wast $contract_name.abi
+    
+    if [ $? != 0 ]; then echo "Failed to publish contract"; popd; return 2; fi
+    
+    popd
+}
+
+function moeda_transfer
+{
+    if [ "$3" == "" ]; then echo "moeda_transfer <source> <destiny> <quantity>"; return 1; fi
+    source=$1
+    destiny=$2
+    quantity=$3
+    
+    json="{\"from\":\"${source}\",\"to\":\"${destiny}\",\"quantity\":${quantity}}"
+    echo $json
+    eosioc push message moeda transfer $json --scope=$source,$destiny
+}
+
+function create_store 
+{
+    eosio_server_initialize
+    
+    echo "Creating default clienta..."
+    eosio_account_create inita clienta
+
+    echo "Creating default clientb..."
+    eosio_account_create inita clientb
+
+    echo "Creating default suppliera..."
+    eosio_account_create inita suppliera
+
+    echo "Creating default supplierb..."
+    eosio_account_create inita supplierb
+    
+    echo "Creating default moeda..."
+    eosio_account_create inita moeda
+    sleep 1
+    eosio_contract_install moeda
+    
+    if [ $? != 0 ]; then echo "Failed to create moeda contract"; return 1; fi
+
+    echo "Creating default store..."
+    eosio_account_create inita store
+    sleep 1
+    eosio_contract_install store
+    
+    if [ $? != 0 ]; then echo "Failed to create store contract"; return 1; fi
+    
+    moeda_transfer moeda clienta 5000000
+    moeda_transfer moeda clientb 15000000
+    moeda_transfer moeda suppliera 20000000
+    moeda_transfer moeda supplierb 20000000
+}
+

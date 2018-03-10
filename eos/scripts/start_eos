@@ -1,0 +1,3 @@
+#!/bin/bash
+
+./build/eos/build/programs/eosiod/eosiod --data-dir=/home/miguel/eos-data/data-dir --config=/home/miguel/eos-data/config.ini --wallet-dir=/home/miguel/eos-data/wallets
