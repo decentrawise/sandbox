@@ -1,0 +1,39 @@
+{
+  "types": [{
+      "new_type_name": "account_name",
+      "type": "name"
+    }
+  ],
+  "structs": [{
+      "name": "product",
+      "base": "",
+      "fields": {
+        "key": "uint64",
+        "name": "string",
+        "price": "uint64",
+        "supplier": "uint64",
+      }
+    }, {
+      "name": "purchase",
+      "base": "",
+      "fields": {
+        "from": "account_name",
+        "product_index": "uint64",
+        "quantity": "uint64"
+      }
+    }
+  ],
+  "actions": [{
+      "action_name": "purchase",
+      "type": "purchase"
+    }
+  ],
+  "tables": [{
+      "table_name": "product",
+      "type": "product",
+      "index_type": "i64",
+      "key_names" : ["key"],
+      "key_types" : ["uint64"]
+    }
+  ]
+}
