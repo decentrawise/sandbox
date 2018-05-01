@@ -1,6 +1,6 @@
 #!/bin/bash
 
-if [ "$RUNTIME_DIR" == "" ]; then echo "Please define the runeime directory first"; return 1; fi
+if [ "$RUNTIME_DIR" == "" ]; then echo "Please define the runtime directory first"; return 1; fi
 
 DEPS_DIR=$RUNTIME_DIR/deps
 
@@ -12,9 +12,15 @@ export BOOST_ROOT=$DEPS_DIR
 export BINARYEN_ROOT=$DEPS_DIR
 
 # Node EOS server
+<<<<<<< Updated upstream
 alias nodeos=$DEPS/bin/nodeos
 # Command line tool
 alias cleos=$DEPS/bin/cleos
+=======
+alias nodeos=$DEPS_DIR/bin/nodeos
+# Command line tool
+alias cleos=$DEPS_DIR/bin/cleos
+>>>>>>> Stashed changes
 # Wallet daemon
 alias keosd=$DEPS_DIR/bin/keosd
 # Build tool
@@ -25,7 +31,10 @@ alias rebash="source $HOME/.bashrc"
 
 alias server_start="nodeos --data-dir=$EOS_DATA_HOME/data-dir --config=$EOS_DATA_HOME/config.ini --wallet-dir=$EOS_DATA_HOME/wallets"
 
-function eosio_server_reset
+inita_active_key_private=5KQwrPbwdL6PhXujxW37FSSQZ1JiwsST4cqQzDeyXtP79zkvFD3
+inita_active_key=EOS6MRyAjQq8ud7hVNYcfnVPJqcVpscN5So8BhtHuGYqET5GDW5CV
+
+function server_reset
 {
     echo "Resetting the blockchain..."
     rm -rf $EOS_WALLET_INFO/*
@@ -43,14 +52,16 @@ function server_initialize
     wallet_create default
     wallet_unlock default
 
-    echo "Importing inita key into 'default' wallet"
-    cleos wallet import -n default 5KQwrPbwdL6PhXujxW37FSSQZ1JiwsST4cqQzDeyXtP79zkvFD3
-    
+    #echo "Importing inita key into 'default' wallet"
+    #cleos wallet import -n default $inita_active_key_private
+   
+    cleos set contract eosio /media/Development/teamcity/work/a4908d7d50750010/build/contracts/eosio.bios -p eosio
+
     echo "Creating default usersa..."
-    account_create inita usera
+    account_create eosio usera
 
     echo "Creating default usersb..."
-    account_create inita userb
+    account_create eosio userb
 }
 
 function get_key
@@ -111,7 +122,7 @@ function wallet_unlock
     account_name=$1
     
     cleos wallet open -n $account_name
-    wallet_password=`eos_get_key $account_name wallet`
+    wallet_password=`get_key $account_name wallet`
     cleos wallet unlock -n $account_name --password=$wallet_password
 }
 
@@ -125,11 +136,11 @@ function account_create
     create_default_keys $account_name
     wallet_create $account_name
 
-    owner_public_key=`eos_get_key $account_name owner public`
-    owner_private_key=`eos_get_key $account_name owner private`
-    active_public_key=`eos_get_key $account_name active public`
-    active_private_key=`eos_get_key $account_name active private`
-    wallet_password=`eos_get_key $account_name wallet`
+    owner_public_key=`get_key $account_name owner public`
+    owner_private_key=`get_key $account_name owner private`
+    active_public_key=`get_key $account_name active public`
+    active_private_key=`get_key $account_name active private`
+    wallet_password=`get_key $account_name wallet`
 
     echo "Adding keys to wallet..."
     cleos wallet open -n $account_name
@@ -139,8 +150,9 @@ function account_create
     cleos wallet import -n $account_name $owner_private_key
     cleos wallet import -n $account_name $active_private_key 
    
-    echo "Adding inita key to wallet..."
-    cleos wallet import -n $account_name 5KQwrPbwdL6PhXujxW37FSSQZ1JiwsST4cqQzDeyXtP79zkvFD3
+    #echo "Adding inita key to wallet..."
+    #cleos wallet import -n $account_name 5KQwrPbwdL6PhXujxW37FSSQZ1JiwsST4cqQzDeyXtP79zkvFD3
+    #cleos wallet import -n $account_name $inita_active_key_private
 
     echo "Creating account..."
     cleos create account $creator_account $account_name $owner_public_key $active_public_key
@@ -239,4 +251,5 @@ function create_store
     moeda_transfer moeda suppliera 20000000
     moeda_transfer moeda supplierb 20000000
 }
+
 
