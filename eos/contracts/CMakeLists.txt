@@ -20,12 +20,13 @@ endif()
 set(CONTRACTS_SRC ${DEPS_DIR}/contracts_src)
 
 list(APPEND CMAKE_MODULE_PATH "${DEPS_DIR}/CMakeModules")
-message("CMAKE_MODULE_PATH: ${CMAKE_MODULE_PATH}")
-include( wasm )
+set(WASM_ROOT ${DEPS_DIR}/bin)
+# include( wasm )
 
 set(DEFAULT_SYSTEM_INCLUDE_FOLDERS ${CONTRACTS_SRC}/libc++/upstream/include ${CONTRACTS_SRC}/musl/upstream/include ${Boost_INCLUDE_DIR})
 set(STANDARD_INCLUDE_FOLDERS ${CONTRACTS_SRC} ${CMAKE_SOURCE_DIR}/externals/magic_get/include)
 
+message("CMAKE_MODULE_PATH: ${CMAKE_MODULE_PATH}")
 message("CMAKE_SOURCE_DIR: ${CMAKE_SOURCE_DIR}")
 message("PROJECT_ROOT: ${PROJECT_ROOT}")
 message("DEPS_DIR: ${DEPS_DIR}")
