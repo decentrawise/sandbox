@@ -19,7 +19,7 @@ alias cleos=$DEPS_DIR/bin/cleos
 alias keosd=$DEPS_DIR/bin/keosd
 # Build tool
 alias eosiocpp=$DEPS_DIR/bin/eosiocpp
-alias eosio-s2wasm $DEPS_DIR/bin/eosio-s2wasm
+alias eosio-s2wasm=$DEPS_DIR/bin/s2wasm
 
 alias rebash="source $HOME/.bashrc"
 
