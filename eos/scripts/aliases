@@ -12,20 +12,14 @@ export BOOST_ROOT=$DEPS_DIR
 export BINARYEN_ROOT=$DEPS_DIR
 
 # Node EOS server
-<<<<<<< Updated upstream
-alias nodeos=$DEPS/bin/nodeos
-# Command line tool
-alias cleos=$DEPS/bin/cleos
-=======
 alias nodeos=$DEPS_DIR/bin/nodeos
 # Command line tool
 alias cleos=$DEPS_DIR/bin/cleos
->>>>>>> Stashed changes
 # Wallet daemon
 alias keosd=$DEPS_DIR/bin/keosd
 # Build tool
 alias eosiocpp=$DEPS_DIR/bin/eosiocpp
-
+alias eosio-s2wasm $DEPS_DIR/bin/eosio-s2wasm
 
 alias rebash="source $HOME/.bashrc"
 

@@ -1,4 +1,4 @@
-#include <eosio.msig/eosio.msig.hpp>
+#include <emanatecolab.hpp>
 #include <eosiolib/action.hpp>
 
 namespace emanate {
@@ -23,11 +23,11 @@ void colab::propose()
    read_action_data( buffer, size );
 
    account_name proposer;
-   name proposal_name;
-   vector<permission_level> requested;
-   transaction_header trx_header;
+   eosio::name proposal_name;
+   eosio::vector<eosio::permission_level> requested;
+   eosio::transaction_header trx_header;
 
-   datastream<const char*> ds( buffer, size );
+   eosio::datastream<const char*> ds( buffer, size );
    ds >> proposer >> proposal_name >> requested;
 
    size_t trx_pos = ds.tellp();
@@ -45,12 +45,12 @@ void colab::propose()
    proptable.emplace( proposer, [&]( auto& prop ) 
    {
       prop.proposal_name       = proposal_name;
-      prop.packed_transaction  = bytes( buffer+trx_pos, buffer+size );
+      prop.packed_transaction  = eosio::bytes( buffer+trx_pos, buffer+size );
       prop.requested_approvals = std::move(requested);
    });
 }
 
-void colab::approve( account_name proposer, name proposal_name, permission_level level ) 
+void colab::approve( account_name proposer, eosio::name proposal_name, eosio::permission_level level ) 
 {
    require_auth( level );
 
@@ -68,7 +68,7 @@ void colab::approve( account_name proposer, name proposal_name, permission_level
    });
 }
 
-void colab::unapprove( account_name proposer, name proposal_name, permission_level level ) 
+void colab::unapprove( account_name proposer, eosio::name proposal_name, eosio::permission_level level ) 
 {
    require_auth( level );
 
@@ -85,7 +85,7 @@ void colab::unapprove( account_name proposer, name proposal_name, permission_lev
    });
 }
 
-void colab::cancel( account_name proposer, name proposal_name, account_name canceler ) 
+void colab::cancel( account_name proposer, eosio::name proposal_name, account_name canceler ) 
 {
    require_auth( canceler );
 
@@ -95,13 +95,13 @@ void colab::cancel( account_name proposer, name proposal_name, account_name canc
 
    if( canceler != proposer ) 
    {
-      eosio_assert( unpack<transaction>( prop_it->packed_transaction ).expiration < now(), "cannot cancel until expiration" );
+      eosio_assert( eosio::unpack<eosio::transaction>( prop_it->packed_transaction ).expiration < now(), "cannot cancel until expiration" );
    }
 
    proptable.erase(prop_it);
 }
 
-void colab::exec( account_name proposer, name proposal_name, account_name executer ) 
+void colab::exec( account_name proposer, eosio::name proposal_name, account_name executer ) 
 {
    require_auth( executer );
 
@@ -117,4 +117,4 @@ void colab::exec( account_name proposer, name proposal_name, account_name execut
 
 } /// namespace eosio
 
-EOSIO_ABI( eosio::colab, (propose)(approve)(unapprove)(cancel)(exec) )
+EOSIO_ABI( emanate::colab, (propose)(approve)(unapprove)(cancel)(exec) )
