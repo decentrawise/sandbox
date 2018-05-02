@@ -6,7 +6,8 @@ DEPS_DIR=$RUNTIME_DIR/deps
 
 EOS_DATA_HOME=$HOME/eos-data
 EOS_WALLET_INFO=$HOME/wallet_info
-EOS_CONTRACTS=$HOME/source/contracts
+EOS_CONTRACTS=/media/Development/teamcity/work/a4908d7d50750010/build/contracts
+USER_CONTRACTS=/media/Development/sandbox/eos/contracts
 
 export BOOST_ROOT=$DEPS_DIR
 export BINARYEN_ROOT=$DEPS_DIR
@@ -49,13 +50,23 @@ function server_initialize
     #echo "Importing inita key into 'default' wallet"
     #cleos wallet import -n default $inita_active_key_private
    
-    cleos set contract eosio /media/Development/teamcity/work/a4908d7d50750010/build/contracts/eosio.bios -p eosio
+    echo "Creating eosio.bios contract"
+    cleos set contract eosio $EOS_CONTRACTS/eosio.bios -p eosio
 
-    echo "Creating default usersa..."
-    account_create eosio usera
 
-    echo "Creating default usersb..."
-    account_create eosio userb
+    echo "Creating eosio.token contract"
+#    cleos create account eosio eosio.token EOS7ijWCBmoXBi3CgtK7DJxentZZeTkeUnaSDvyro9dq7Sd1C3dC4 EOS7ijWCBmoXBi3CgtK7DJxentZZeTkeUnaSDvyro9dq7Sd1C3dC4
+    account_create eosio eosio.token
+    cleos set contract eosio.token $EOS_CONTRACTS/eosio.token -p eosio.token
+
+    echo "Create then MNE token"
+    cleos push action eosio.token create '[ "eosio", "1000000000.0000 EOS", 0, 0, 0]' -p eosio.token
+
+    #echo "Creating default usersa..."
+    #account_create eosio usera
+
+    #echo "Creating default usersb..."
+    #account_create eosio userb
 }
 
 function get_key
@@ -166,7 +177,7 @@ function contract_create
     wallet_unlock $contract_name
 
     echo "Prepare contract skeleton code"
-    pushd $EOS_CONTRACTS
+    pushd $USER_CONTRACTS
     eosiocpp -n $contract_name
     pushd $contract_name
     rm $contract_name.abi
@@ -176,11 +187,12 @@ function contract_create
     popd
 }
 
-function contract_install
+
+function contract_setup
 {
     if [ "$1" == "" ]; then contract_name=${PWD##*/}; else contract_name=$1; fi
 
-    pushd $EOS_CONTRACTS/$contract_name
+    pushd $USER_CONTRACTS/$contract_name
 
     echo "Building the contract..."
     eosiocpp -o $contract_name.wast $contract_name.cpp
@@ -188,10 +200,29 @@ function contract_install
 
     echo "Unlocking wallets for 'default' and '$contract_name'"
     wallet_unlock default
+    account_create eosio $contract_name
     wallet_unlock $contract_name
-    
+}
+
+
+function contract_install
+{
+#    if [ "$1" == "" ]; then contract_name=${PWD##*/}; else contract_name=$1; fi
+
+#    pushd $USER_CONTRACTS/$contract_name
+
+#    echo "Building the contract..."
+#    eosiocpp -o $contract_name.wast $contract_name.cpp
+#    if [ $? != 0 ]; then echo "Failed to build contract"; popd; return 1; fi
+
+#    echo "Unlocking wallets for 'default' and '$contract_name'"
+#    wallet_unlock default
+#    account_create eosio $contract_name
+#    wallet_unlock $contract_name
+ 
     echo "Installing the contract..."
-    cleos set contract $contract_name $contract_name.wast $contract_name.abi
+    #cleos set contract $contract_name $contract_name.wast $contract_name.abi
+    cleos set contract $contract_name $USER_CONTRACTS/$contract_name
     
     if [ $? != 0 ]; then echo "Failed to publish contract"; popd; return 2; fi
     
@@ -246,4 +277,22 @@ function create_store
     moeda_transfer moeda supplierb 20000000
 }
 
+function create_emanate_base
+{
+    server_initialize
+
+    echo "Creating default colabuser1..."
+    account_create eosio colabuser1
+
+    echo "Creating default colabuser2..."
+    account_create eosio colabuser2
+
+    echo "Creating default user1..."
+    account_create eosio user1
+
+    cleos push action eosio.token issue '[ "user1", "100.0000 EOS", "first delivery" ]' -p eosio
+
+#    contract_setup emanatecolab
+#    contract_install emanatecolab
+}
 
