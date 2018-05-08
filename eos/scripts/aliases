@@ -24,7 +24,7 @@ alias eosio-s2wasm=$DEPS_DIR/bin/s2wasm
 
 alias rebash="source $HOME/.bashrc"
 
-alias server_start="nodeos --data-dir=$EOS_DATA_HOME/data-dir --config=$EOS_DATA_HOME/config.ini --wallet-dir=$EOS_DATA_HOME/wallets"
+alias server_start="nodeos --data-dir=$EOS_DATA_HOME/data-dir --config=$EOS_DATA_HOME/config.ini --wallet-dir=$EOS_DATA_HOME/wallets --skip-transaction-signatures"
 
 inita_active_key_private=5KQwrPbwdL6PhXujxW37FSSQZ1JiwsST4cqQzDeyXtP79zkvFD3
 inita_active_key=EOS6MRyAjQq8ud7hVNYcfnVPJqcVpscN5So8BhtHuGYqET5GDW5CV
@@ -50,6 +50,9 @@ function server_initialize
     #echo "Importing inita key into 'default' wallet"
     #cleos wallet import -n default $inita_active_key_private
    
+    echo "Installing the eosio.system contract"
+    cleos set contract eosio $EOS_CONTRACTS/eosio.system -p eosio
+    
     echo "Creating eosio.bios contract"
     cleos set contract eosio $EOS_CONTRACTS/eosio.bios -p eosio
 
@@ -207,7 +210,7 @@ function contract_setup
 
 function contract_install
 {
-#    if [ "$1" == "" ]; then contract_name=${PWD##*/}; else contract_name=$1; fi
+   if [ "$1" == "" ]; then contract_name=${PWD##*/}; else contract_name=$1; fi
 
 #    pushd $USER_CONTRACTS/$contract_name
 
@@ -224,9 +227,9 @@ function contract_install
     #cleos set contract $contract_name $contract_name.wast $contract_name.abi
     cleos set contract $contract_name $USER_CONTRACTS/$contract_name
     
-    if [ $? != 0 ]; then echo "Failed to publish contract"; popd; return 2; fi
+    if [ $? != 0 ]; then echo "Failed to publish contract"; return 2; fi
     
-    popd
+#     popd
 }
 
 function moeda_transfer
@@ -292,7 +295,48 @@ function create_emanate_base
 
     cleos push action eosio.token issue '[ "user1", "100.0000 EOS", "first delivery" ]' -p eosio
 
-#    contract_setup emanatecolab
-#    contract_install emanatecolab
+    contract_setup emanatecolab
+    contract_install emanatecolab
 }
+
+function emanate_test_contract
+{
+    get_balance user1
+    get_balance colabuser1
+    get_balance colabuser2
+
+    echo "Make contract proposal"
+    cleos push action emanatecolab propose '{"proposer": "colabuser1", "proposal_name": "contract1", "price": 10000, "requested": [{ "name": "colabuser2", "percentage": "30" }]}' -p colabuser1
+    
+    echo "Approve proposal"; sleep 1
+    cleos push action emanatecolab approve '{"proposer": "colabuser1", "proposal_name": "contract1", "approver": "colabuser2"}' -p colabuser2 -p colabuser1
+    echo "Reject proposal"; sleep 1
+    cleos push action emanatecolab unapprove '{"proposer": "colabuser1", "proposal_name": "contract1", "unapprover": "colabuser2"}' -p colabuser2 -p colabuser1
+    echo "Approve proposal"; sleep 1
+    cleos push action emanatecolab approve '{"proposer": "colabuser1", "proposal_name": "contract1", "approver": "colabuser2"}' -p colabuser2 -p colabuser1
+    echo "Execute contract"; sleep 1
+    cleos push action emanatecolab exec '["colabuser1", "contract1", "user1"]' -p user1
+
+    sleep 2
+    get_balance user1
+    get_balance colabuser1
+    get_balance colabuser2
+}
+
+
+
+function get_balance
+{
+    if [ "$1" == "" ]; then echo "get_balance <user> <token=EOS>"; return; fi
+    
+    user=$1
+    
+    if [ "$2" == "" ]; then token="EOS"; else token=$2; fi
+    
+    
+    balance=`cleos get currency balance eosio.token $user $token`
+    echo $user.balance = $balance
+}
+
+
 

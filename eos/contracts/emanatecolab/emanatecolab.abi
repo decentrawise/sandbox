@@ -24,6 +24,13 @@
          {"name": "data", "type": "bytes"}
       ]
     },{
+      "name": "colab_data",
+      "base": "",
+      "fields": [
+         {"name": "name", "type": "action_name"},
+         {"name": "percentage", "type": "uint32"},
+      ]
+    },{
       "name": "transaction_header",
       "base": "",
       "fields": [
@@ -48,8 +55,8 @@
       "fields": [
         {"name":"proposer", "type":"account_name"},
         {"name":"proposal_name", "type":"name"},
-        {"name":"requested", "type":"permission_level[]"},
-        {"name":"trx", "type":"transaction"}
+        {"name": "price", "type": "uint32"},
+        {"name":"requested", "type":"colab_data[]"},
       ]
     },{
      "name": "approve",
@@ -57,7 +64,7 @@
      "fields": [
         {"name":"proposer", "type":"account_name"},
         {"name":"proposal_name", "type":"name"},
-        {"name":"level", "type":"permission_level"}
+        {"name":"approver", "type":"account_name"}
      ]
     },{
      "name": "unapprove",
@@ -65,7 +72,7 @@
      "fields": [
         {"name":"proposer", "type":"account_name"},
         {"name":"proposal_name", "type":"name"},
-        {"name":"level", "type":"permission_level"}
+        {"name":"unapprover", "type":"account_name"}
      ]
     },{
       "name": "cancel",
@@ -88,9 +95,9 @@
       "base": "",
       "fields": [
         {"name": "proposal_name", "type": "name"},
-        {"name": "requested_approvals", "type": "permission_level[]"},
-        {"name": "provided_approvals", "type": "permission_level[]"},
-        {"name": "packed_transaction", "type": "bytes"}
+        {"name": "requested_approvals", "type": "colab_data[]"},
+        {"name": "provided_approvals", "type": "colab_data[]"},
+        {"name": "price", "type": "uint32"},
       ]
     }
   ],

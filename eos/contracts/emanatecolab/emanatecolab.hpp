@@ -1,13 +1,29 @@
 #pragma once
 #include <eosiolib/eosio.hpp>
 #include <eosiolib/transaction.hpp>
+#include <eosiolib/asset.hpp>
 
 namespace emanate {
-
-
-    struct colab_permission_level : eosio::permission_level
+    
+    struct colab_data
     {
-        colab_permission_level(account_name actor) : eosio::permission_level(actor, N(active)) {  }
+        account_name name;
+        uint32_t percentage;
+        // std::string file;
+
+        bool operator == (account_name n) const { return name == n; }
+
+        EOSLIB_SERIALIZE( colab_data, (name)(percentage) )
+    };
+
+    struct transfer
+    {
+        account_name from;
+        account_name to;
+        eosio::asset quantity;
+        std::string  memo;
+        
+        EOSLIB_SERIALIZE( transfer, (from)(to)(quantity)(memo) )
     };
     
     class colab : public eosio::contract 
@@ -16,23 +32,22 @@ namespace emanate {
             
             colab( account_name self ):contract(self){}
 
-            void propose();
-            void approve( account_name proposer, eosio::name proposal_name, eosio::permission_level level );
-            void unapprove( account_name proposer, eosio::name proposal_name, eosio::permission_level level );
+            void propose(account_name proposer, eosio::name proposal_name, uint32_t price, eosio::vector<colab_data> requested);
+            void approve( account_name proposer, eosio::name proposal_name, account_name approver );
+            void unapprove( account_name proposer, eosio::name proposal_name, account_name unapprover );
             void cancel( account_name proposer, eosio::name proposal_name, account_name canceler );
             void exec( account_name proposer, eosio::name proposal_name, account_name executer );
 
         private:
             struct proposal 
             {
-                eosio::name                       proposal_name;       //  Project name
-                eosio::vector<eosio::permission_level>   requested_approvals;
-                eosio::vector<eosio::permission_level>   provided_approvals;
-                eosio::vector<char>               packed_transaction;
+                eosio::name                     proposal_name;       //  Project name
+                eosio::vector<colab_data>       requested_approvals;
+                eosio::vector<colab_data>       provided_approvals;
+                uint32_t                        price;
                 
                 //  vector<std::string> original_files;     // Original files 
                 //  std::string final_file;                 // Final file
-                //  map<account_name, float> royalties;
 
                 auto primary_key()const { return proposal_name.value; }
             };
