@@ -58,13 +58,14 @@ function server_initialize
 
 
     echo "Creating eosio.token contract"
-#    cleos create account eosio eosio.token EOS7ijWCBmoXBi3CgtK7DJxentZZeTkeUnaSDvyro9dq7Sd1C3dC4 EOS7ijWCBmoXBi3CgtK7DJxentZZeTkeUnaSDvyro9dq7Sd1C3dC4
     account_create eosio eosio.token
     cleos set contract eosio.token $EOS_CONTRACTS/eosio.token -p eosio.token
 
-    echo "Create then MNE token"
+    echo "Create then EOS token"
     cleos push action eosio.token create '[ "eosio", "1000000000.0000 EOS", 0, 0, 0]' -p eosio.token
 
+    echo "Create then EMA token"
+    cleos push action eosio.token create '[ "eosio", "1000000000.0000 EMA", 0, 0, 0]' -p eosio.token
     #echo "Creating default usersa..."
     #account_create eosio usera
 
@@ -294,6 +295,7 @@ function create_emanate_base
     account_create eosio user1
 
     cleos push action eosio.token issue '[ "user1", "100.0000 EOS", "first delivery" ]' -p eosio
+    cleos push action eosio.token issue '[ "user1", "100.0000 EMA", "first delivery" ]' -p eosio
 
     contract_setup emanatecolab
     contract_install emanatecolab
@@ -318,9 +320,9 @@ function emanate_test_contract
     cleos push action emanatecolab exec '["colabuser1", "contract1", "user1"]' -p user1
 
     sleep 2
-    get_balance user1
-    get_balance colabuser1
-    get_balance colabuser2
+    get_balance user1 EMA
+    get_balance colabuser1 EMA
+    get_balance colabuser2 EMA
 }
 
 

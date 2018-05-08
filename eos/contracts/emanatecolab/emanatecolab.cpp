@@ -82,11 +82,11 @@ void colab::exec( account_name proposer, eosio::name proposal_name, account_name
     for( const colab_data &data : prop_it->provided_approvals ) 
     {
         percentage -= data.percentage;
-        eosio::action action( eosio::permission_level( executer, N(active) ), N(eosio.token), N(transfer), transfer{ executer, data.name, eosio::asset(totalPayment * data.percentage / 100, S(4, EOS)), "" } );
+        eosio::action action( eosio::permission_level( executer, N(active) ), N(eosio.token), N(transfer), transfer{ executer, data.name, eosio::asset(totalPayment * data.percentage / 100, S(4, EMA)), "" } );
         trx.actions.emplace_back(std::move(action));
     }
     
-    eosio::action action( eosio::permission_level( executer, N(active) ), N(eosio.token), N(transfer), transfer{ executer, proposer, eosio::asset(totalPayment * percentage / 100, S(4, EOS)), "" } );
+    eosio::action action( eosio::permission_level( executer, N(active) ), N(eosio.token), N(transfer), transfer{ executer, proposer, eosio::asset(totalPayment * percentage / 100, S(4, EMA)), "" } );
     trx.actions.emplace_back(std::move(action));
 
     trx.send(0, executer);
