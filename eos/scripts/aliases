@@ -1,31 +1,35 @@
 #!/bin/bash
 
-if [ "$RUNTIME_DIR" == "" ]; then echo "Please define the runeime directory first"; return 1; fi
+if [ "$RUNTIME_DIR" == "" ]; then echo "Please define the runtime directory first"; return 1; fi
 
 DEPS_DIR=$RUNTIME_DIR/deps
 
 EOS_DATA_HOME=$HOME/eos-data
 EOS_WALLET_INFO=$HOME/wallet_info
-EOS_CONTRACTS=$HOME/source/contracts
+EOS_CONTRACTS=/media/Development/teamcity/work/a4908d7d50750010/build/contracts
+USER_CONTRACTS=/media/Development/sandbox/eos/contracts
 
 export BOOST_ROOT=$DEPS_DIR
 export BINARYEN_ROOT=$DEPS_DIR
 
 # Node EOS server
-alias nodeos=$DEPS/bin/nodeos
+alias nodeos=$DEPS_DIR/bin/nodeos
 # Command line tool
-alias cleos=$DEPS/bin/cleos
+alias cleos=$DEPS_DIR/bin/cleos
 # Wallet daemon
 alias keosd=$DEPS_DIR/bin/keosd
 # Build tool
 alias eosiocpp=$DEPS_DIR/bin/eosiocpp
-
+alias eosio-s2wasm=$DEPS_DIR/bin/s2wasm
 
 alias rebash="source $HOME/.bashrc"
 
-alias server_start="nodeos --data-dir=$EOS_DATA_HOME/data-dir --config=$EOS_DATA_HOME/config.ini --wallet-dir=$EOS_DATA_HOME/wallets"
+alias server_start="nodeos --data-dir=$EOS_DATA_HOME/data-dir --config=$EOS_DATA_HOME/config.ini --wallet-dir=$EOS_DATA_HOME/wallets --skip-transaction-signatures"
 
-function eosio_server_reset
+inita_active_key_private=5KQwrPbwdL6PhXujxW37FSSQZ1JiwsST4cqQzDeyXtP79zkvFD3
+inita_active_key=EOS6MRyAjQq8ud7hVNYcfnVPJqcVpscN5So8BhtHuGYqET5GDW5CV
+
+function server_reset
 {
     echo "Resetting the blockchain..."
     rm -rf $EOS_WALLET_INFO/*
@@ -43,14 +47,30 @@ function server_initialize
     wallet_create default
     wallet_unlock default
 
-    echo "Importing inita key into 'default' wallet"
-    cleos wallet import -n default 5KQwrPbwdL6PhXujxW37FSSQZ1JiwsST4cqQzDeyXtP79zkvFD3
+    #echo "Importing inita key into 'default' wallet"
+    #cleos wallet import -n default $inita_active_key_private
+   
+    echo "Installing the eosio.system contract"
+    cleos set contract eosio $EOS_CONTRACTS/eosio.system -p eosio
     
-    echo "Creating default usersa..."
-    account_create inita usera
+    echo "Creating eosio.bios contract"
+    cleos set contract eosio $EOS_CONTRACTS/eosio.bios -p eosio
 
-    echo "Creating default usersb..."
-    account_create inita userb
+
+    echo "Creating eosio.token contract"
+    account_create eosio eosio.token
+    cleos set contract eosio.token $EOS_CONTRACTS/eosio.token -p eosio.token
+
+    echo "Create then EOS token"
+    cleos push action eosio.token create '[ "eosio", "1000000000.0000 EOS", 0, 0, 0]' -p eosio.token
+
+    echo "Create then EMA token"
+    cleos push action eosio.token create '[ "eosio", "1000000000.0000 EMA", 0, 0, 0]' -p eosio.token
+    #echo "Creating default usersa..."
+    #account_create eosio usera
+
+    #echo "Creating default usersb..."
+    #account_create eosio userb
 }
 
 function get_key
@@ -111,7 +131,7 @@ function wallet_unlock
     account_name=$1
     
     cleos wallet open -n $account_name
-    wallet_password=`eos_get_key $account_name wallet`
+    wallet_password=`get_key $account_name wallet`
     cleos wallet unlock -n $account_name --password=$wallet_password
 }
 
@@ -125,11 +145,11 @@ function account_create
     create_default_keys $account_name
     wallet_create $account_name
 
-    owner_public_key=`eos_get_key $account_name owner public`
-    owner_private_key=`eos_get_key $account_name owner private`
-    active_public_key=`eos_get_key $account_name active public`
-    active_private_key=`eos_get_key $account_name active private`
-    wallet_password=`eos_get_key $account_name wallet`
+    owner_public_key=`get_key $account_name owner public`
+    owner_private_key=`get_key $account_name owner private`
+    active_public_key=`get_key $account_name active public`
+    active_private_key=`get_key $account_name active private`
+    wallet_password=`get_key $account_name wallet`
 
     echo "Adding keys to wallet..."
     cleos wallet open -n $account_name
@@ -139,8 +159,9 @@ function account_create
     cleos wallet import -n $account_name $owner_private_key
     cleos wallet import -n $account_name $active_private_key 
    
-    echo "Adding inita key to wallet..."
-    cleos wallet import -n $account_name 5KQwrPbwdL6PhXujxW37FSSQZ1JiwsST4cqQzDeyXtP79zkvFD3
+    #echo "Adding inita key to wallet..."
+    #cleos wallet import -n $account_name 5KQwrPbwdL6PhXujxW37FSSQZ1JiwsST4cqQzDeyXtP79zkvFD3
+    #cleos wallet import -n $account_name $inita_active_key_private
 
     echo "Creating account..."
     cleos create account $creator_account $account_name $owner_public_key $active_public_key
@@ -160,7 +181,7 @@ function contract_create
     wallet_unlock $contract_name
 
     echo "Prepare contract skeleton code"
-    pushd $EOS_CONTRACTS
+    pushd $USER_CONTRACTS
     eosiocpp -n $contract_name
     pushd $contract_name
     rm $contract_name.abi
@@ -170,11 +191,11 @@ function contract_create
     popd
 }
 
-function contract_install
+function contract_setup
 {
     if [ "$1" == "" ]; then contract_name=${PWD##*/}; else contract_name=$1; fi
 
-    pushd $EOS_CONTRACTS/$contract_name
+    pushd $USER_CONTRACTS/$contract_name
 
     echo "Building the contract..."
     eosiocpp -o $contract_name.wast $contract_name.cpp
@@ -182,14 +203,33 @@ function contract_install
 
     echo "Unlocking wallets for 'default' and '$contract_name'"
     wallet_unlock default
+    account_create eosio $contract_name
     wallet_unlock $contract_name
-    
+}
+
+
+function contract_install
+{
+   if [ "$1" == "" ]; then contract_name=${PWD##*/}; else contract_name=$1; fi
+
+#    pushd $USER_CONTRACTS/$contract_name
+
+#    echo "Building the contract..."
+#    eosiocpp -o $contract_name.wast $contract_name.cpp
+#    if [ $? != 0 ]; then echo "Failed to build contract"; popd; return 1; fi
+
+#    echo "Unlocking wallets for 'default' and '$contract_name'"
+#    wallet_unlock default
+#    account_create eosio $contract_name
+#    wallet_unlock $contract_name
+ 
     echo "Installing the contract..."
-    cleos set contract $contract_name $contract_name.wast $contract_name.abi
+    #cleos set contract $contract_name $contract_name.wast $contract_name.abi
+    cleos set contract $contract_name $USER_CONTRACTS/$contract_name
     
-    if [ $? != 0 ]; then echo "Failed to publish contract"; popd; return 2; fi
+    if [ $? != 0 ]; then echo "Failed to publish contract"; return 2; fi
     
-    popd
+#     popd
 }
 
 function moeda_transfer
@@ -238,5 +278,64 @@ function create_store
     moeda_transfer moeda clientb 15000000
     moeda_transfer moeda suppliera 20000000
     moeda_transfer moeda supplierb 20000000
+}
+
+function create_emanate_base
+{
+    server_initialize
+
+    echo "Creating default colabuser1..."
+    account_create eosio colabuser1
+
+    echo "Creating default colabuser2..."
+    account_create eosio colabuser2
+
+    echo "Creating default user1..."
+    account_create eosio user1
+
+    cleos push action eosio.token issue '[ "user1", "100.0000 EOS", "first delivery" ]' -p eosio
+    cleos push action eosio.token issue '[ "user1", "100.0000 EMA", "first delivery" ]' -p eosio
+
+    contract_setup emanatecolab
+    contract_install emanatecolab
+}
+
+function emanate_test_contract
+{
+    get_balance user1
+    get_balance colabuser1
+    get_balance colabuser2
+
+    echo "Make contract proposal"
+    cleos push action emanatecolab propose '{"proposer": "colabuser1", "proposal_name": "contract1", "price": 10000, "requested": [{ "name": "colabuser2", "percentage": "30" }]}' -p colabuser1
+    
+    echo "Approve proposal"; sleep 1
+    cleos push action emanatecolab approve '{"proposer": "colabuser1", "proposal_name": "contract1", "approver": "colabuser2"}' -p colabuser2 -p colabuser1
+    echo "Reject proposal"; sleep 1
+    cleos push action emanatecolab unapprove '{"proposer": "colabuser1", "proposal_name": "contract1", "unapprover": "colabuser2"}' -p colabuser2 -p colabuser1
+    echo "Approve proposal"; sleep 1
+    cleos push action emanatecolab approve '{"proposer": "colabuser1", "proposal_name": "contract1", "approver": "colabuser2"}' -p colabuser2 -p colabuser1
+    echo "Execute contract"; sleep 1
+    cleos push action emanatecolab exec '["colabuser1", "contract1", "user1"]' -p user1
+
+    sleep 2
+    get_balance user1 EMA
+    get_balance colabuser1 EMA
+    get_balance colabuser2 EMA
+}
+
+
+
+function get_balance
+{
+    if [ "$1" == "" ]; then echo "get_balance <user> <token=EOS>"; return; fi
+    
+    user=$1
+    
+    if [ "$2" == "" ]; then token="EOS"; else token=$2; fi
+    
+    
+    balance=`cleos get currency balance eosio.token $user $token`
+    echo $user.balance = $balance
 }
 
