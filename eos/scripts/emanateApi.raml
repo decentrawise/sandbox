@@ -1,0 +1,97 @@
+#%RAML 1.0
+title: Emanate API
+baseUri: https://casam2.ddns.net/
+version: v1
+description: |
+  Make some description here...
+protocols: [HTTP]
+traits:
+  responseObject:
+    responses:
+      200:
+        body:
+          application/json:
+            example: |
+              {
+                "success": true,
+                "data": { ... }
+              }
+              otherwise
+              {
+                "success": false,
+                "message": "the error message goes here"
+              }
+  responseArray:
+    responses:
+      200:
+        body:
+          application/json:
+            example: |
+              {
+                "success": true,
+                "data": [
+                  { ... },
+                  ...
+                ]
+              }
+              otherwise
+              {
+                "success": false,
+                "message": "the error message goes here"
+              }
+
+              
+/propose:
+    description: "Propose a collaboration contract to one or several users"
+    post:
+        description: "Propose a collaboration contract to one or several users"
+        body:
+            application/json:
+                example: | 
+                    {
+                        "from": "colabuser1", 
+                        "name": "contract1", 
+                        "price": 10000, 
+                        "partners": [
+                            {"name": "colabuser2", 
+                            "percentage": 10}
+                        ]
+                    }
+              
+/accept:
+    description: "Accept a contract proposal"
+    post:
+        description: "Accept a contract proposal"
+        body:
+            application/json:
+                example: | 
+                    {
+                        "from": "colabuser2", 
+                        "proposer": "colabuser1", 
+                        "name": "contract1"
+                    }
+/reject:
+    description: "Reject a contract proposal"
+    post:
+        description: "Reject a contract proposal"
+        body:
+            application/json:
+                example: | 
+                    {
+                        "from": "colabuser2", 
+                        "proposer": "colabuser1", 
+                        "name": "contract1"
+                    }
+
+/execute:
+    description: "Execute the contract"
+    post:
+        description: "Execute the contract"
+        body:
+            application/json:
+                example: | 
+                    {
+                        "from": "colabuser2", 
+                        "proposer": "colabuser1", 
+                        "name": "user1"
+                    }
