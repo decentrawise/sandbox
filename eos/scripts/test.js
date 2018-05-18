@@ -1,7 +1,9 @@
-var fs = require("fs");
+"use strict";
+
 var Eos = require('eosjs') // Eos = require('./src')
 let {ecc} = Eos.modules
 var execSync = require('child_process').execSync;
+var fs = require("fs");
 var path = require('path');
 var binaryen = require('binaryen')
 
@@ -188,7 +190,7 @@ class EOSClient {
     }
     
     issueTokens(accountName, amount, token) {
-        data = {
+        var data = {
             "to": accountName,
             "quantity": [amount + '.0000', token].join(' '),
             "memo": "First issue"
@@ -197,7 +199,7 @@ class EOSClient {
     }
 }
 
-cleos = new EOSClient();
+var cleos = new EOSClient();
 
 // Initialize system
 cleos.createWallet('default');
@@ -214,13 +216,27 @@ cleos.createToken('1000000000.0000 EMA');
 
 cleos.createAccount('colabuser1');
 cleos.createAccount('colabuser2');
+cleos.createAccount('colabuser3');
+cleos.createAccount('colabuser4');
 cleos.createAccount('user1');
+cleos.createAccount('user2');
+cleos.createAccount('user3');
+
+sleep(1);
 
 cleos.issueTokens('user1', 100, 'EMA');
+cleos.issueTokens('user2', 200, 'EMA');
+cleos.issueTokens('user3', 300, 'EMA');
+
+// sleep(1);
+
 console.log(cleos.getAccountBalance('user1', 'EMA'));
+console.log(cleos.getAccountBalance('user2', 'EMA'));
+console.log(cleos.getAccountBalance('user3', 'EMA'));
 
 cleos.installContract('emanatecolab');
 
+/*
 var data = {
     "proposer": "colabuser1", 
     "proposal_name": "contract1", 
@@ -255,4 +271,4 @@ console.log(cleos.getAccountBalance('user1', 'EMA'));
 console.log(cleos.getAccountBalance('colabuser1', 'EMA'));
 console.log(cleos.getAccountBalance('colabuser2', 'EMA'));
 
-
+*/
