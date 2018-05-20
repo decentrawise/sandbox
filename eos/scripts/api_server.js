@@ -12,7 +12,7 @@ app.use(bodyParser.json());
 function getKeyPair(accountName, level) {
 
     var result = {};
-    var walletPath = '/home/miguel/wallet_info';
+    var walletPath = path.join(process.env.HOME, 'wallet_info');
     
     if( level == null ) {
         level = 'active';
@@ -84,10 +84,15 @@ console.log(config)
 
 var eos = Eos.Testnet(config);
 
+// app.use("/api", express.static('/api'));
 
+app.get('/api', function(req, res) {
+    res.sendFile(path.join(process.cwd(), 'api.html'));
+});
 
-app.get('/', (req, res) => res.send('Welcome to the Emanate API'))
+app.get('/', (req, res) => res.send('Welcome to the Emanate API<p><a href="/api">Documentation<a/>'))
 
+// app.get('/api', (req, res) => res.send('Welcome to the Emanate API'))
 /*
  * {
  *     "from": <colaboration contract creator>

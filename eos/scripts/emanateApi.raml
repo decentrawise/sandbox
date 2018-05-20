@@ -1,45 +1,10 @@
 #%RAML 1.0
-title: Emanate API
+title: Emanate Colaboration Contract
 baseUri: https://casam2.ddns.net/
 version: v1
 description: |
   Make some description here...
 protocols: [HTTP]
-traits:
-  responseObject:
-    responses:
-      200:
-        body:
-          application/json:
-            example: |
-              {
-                "success": true,
-                "data": { ... }
-              }
-              otherwise
-              {
-                "success": false,
-                "message": "the error message goes here"
-              }
-  responseArray:
-    responses:
-      200:
-        body:
-          application/json:
-            example: |
-              {
-                "success": true,
-                "data": [
-                  { ... },
-                  ...
-                ]
-              }
-              otherwise
-              {
-                "success": false,
-                "message": "the error message goes here"
-              }
-
               
 /propose:
     description: "Propose a collaboration contract to one or several users"
@@ -57,6 +22,20 @@ traits:
                             "percentage": 10}
                         ]
                     }
+        responses:
+            200:
+                body:
+                    application/json:
+                        example: |
+                            {
+                                "success": true,
+                                "data": { ... }
+                            }
+                            otherwise
+                            {
+                                "success": false,
+                                "message": "the error message goes here"
+                            }
               
 /accept:
     description: "Accept a contract proposal"
@@ -70,6 +49,23 @@ traits:
                         "proposer": "colabuser1", 
                         "name": "contract1"
                     }
+        responses:
+            200:
+                body:
+                    application/json:
+                        example: |
+                            {
+                                "success": true,
+                                "data": { ... }
+                            }
+                            otherwise
+                            {
+                                "success": false,
+                                "message": "the error message goes here"
+                            }
+
+                            
+                            
 /reject:
     description: "Reject a contract proposal"
     post:
@@ -82,7 +78,22 @@ traits:
                         "proposer": "colabuser1", 
                         "name": "contract1"
                     }
+        responses:
+            200:
+                body:
+                    application/json:
+                        example: |
+                            {
+                                "success": true,
+                                "data": { ... }
+                            }
+                            otherwise
+                            {
+                                "success": false,
+                                "message": "the error message goes here"
+                            }
 
+                    
 /execute:
     description: "Execute the contract"
     post:
@@ -94,4 +105,30 @@ traits:
                         "from": "colabuser2", 
                         "proposer": "colabuser1", 
                         "name": "user1"
+                    }
+        responses:
+            200:
+                body:
+                    application/json:
+                        example: |
+                            {
+                                "success": true,
+                                "data": { ... }
+                            }
+                            otherwise
+                            {
+                                "success": false,
+                                "message": "the error message goes here"
+                            }
+
+/getContract:
+    description: "Get contract details"
+    post:
+        description: "Get contract details"
+        body:
+            application/json:
+                example: | 
+                    {
+                        "proposer": "colabuser2", 
+                        "contract": "contract1", 
                     }
