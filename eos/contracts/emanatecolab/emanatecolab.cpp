@@ -4,59 +4,64 @@
 namespace emanate {
 
 
-void colab::propose(account_name proposer, eosio::name proposal_name, uint32_t price, eosio::vector<colab_data> requested)
+void collab::propose(account_name proposer, eosio::name proposal_name, uint32_t price, const std::string &filename, approvals_t requested)
 {
     require_auth( proposer );
 
     proposals proptable( _self, proposer );
     eosio_assert( proptable.find( proposal_name ) == proptable.end(), "proposal with the same name exists" );
+    eosio_assert(requested.size() > 0, "you need at least one user");
 
     //check_auth( buffer+trx_pos, size-trx_pos, requested );
 
+    prints("");
+    prints("");
+    
     proptable.emplace( proposer, [&]( auto& prop ) 
     {
-        prop.proposal_name       = proposal_name;
-        prop.requested_approvals = std::move(requested);
-        prop.price = price;
+        prop.name      = proposal_name;
+        prop.approvals = std::move(requested);
+        prop.price     = price;
+        prop.filename  = filename;
     });
 }
 
-void colab::approve( account_name proposer, eosio::name proposal_name, account_name approver ) 
+void collab::approve( account_name proposer, eosio::name proposal_name, account_name approver ) 
 {
     proposals proptable( _self, proposer );
     auto prop_it = proptable.find( proposal_name );
     eosio_assert( prop_it != proptable.end(), "proposal not found" );
 
-    auto iter = std::find( prop_it->requested_approvals.begin(), prop_it->requested_approvals.end(), approver );
-    eosio_assert( iter != prop_it->requested_approvals.end(), "approval is not on the list of requested approvals" );
+    auto iter = std::find( prop_it->approvals.begin(), prop_it->approvals.end(), approver );
+    eosio_assert( iter != prop_it->approvals.end(), "approval is not on the list of requested approvals" );
 
     require_auth( iter->name );
 
     proptable.modify( prop_it, proposer, [&]( auto& mprop ) 
     {
-        mprop.provided_approvals.push_back( *iter );
-        mprop.requested_approvals.erase( iter );
+        mprop.approvals.push_back( *iter );
+        mprop.approvals.erase( iter );
     });
 }
 
-void colab::unapprove( account_name proposer, eosio::name proposal_name, account_name unapprover ) 
+void collab::unapprove( account_name proposer, eosio::name proposal_name, account_name unapprover ) 
 {
     proposals proptable( _self, proposer );
     auto prop_it = proptable.find( proposal_name );
     eosio_assert( prop_it != proptable.end(), "proposal not found" );
-    auto iter = std::find( prop_it->provided_approvals.begin(), prop_it->provided_approvals.end(), unapprover );
-    eosio_assert( iter != prop_it->provided_approvals.end(), "no approval previously granted" );
+    auto iter = std::find( prop_it->approvals.begin(), prop_it->approvals.end(), unapprover );
+    eosio_assert( iter != prop_it->approvals.end(), "no approval previously granted" );
 
     require_auth( iter->name );
 
     proptable.modify( prop_it, proposer, [&]( auto& mprop ) 
     {
-        mprop.requested_approvals.push_back( *iter );
-        mprop.provided_approvals.erase( iter );
+        mprop.approvals.push_back( *iter );
+        mprop.approvals.erase( iter );
     });
 }
 
-void colab::cancel( account_name proposer, eosio::name proposal_name, account_name canceler ) 
+void collab::cancel( account_name proposer, eosio::name proposal_name, account_name canceler ) 
 {
     require_auth( canceler );
 
@@ -67,7 +72,7 @@ void colab::cancel( account_name proposer, eosio::name proposal_name, account_na
     proptable.erase(prop_it);
 }
 
-void colab::exec( account_name proposer, eosio::name proposal_name, account_name executer ) 
+void collab::exec( account_name proposer, eosio::name proposal_name, account_name executer, uint32_t seconds ) 
 {
     require_auth( executer );
 
@@ -79,7 +84,7 @@ void colab::exec( account_name proposer, eosio::name proposal_name, account_name
     
     uint32_t percentage = 100;
     uint64_t totalPayment = 10000;
-    for( const colab_data &data : prop_it->provided_approvals ) 
+    for( const collab_data &data : prop_it->approvals ) 
     {
         percentage -= data.percentage;
         eosio::action action( eosio::permission_level( executer, N(active) ), N(eosio.token), N(transfer), transfer{ executer, data.name, eosio::asset(totalPayment * data.percentage / 100, S(4, EMA)), "" } );
@@ -94,4 +99,4 @@ void colab::exec( account_name proposer, eosio::name proposal_name, account_name
 
 } /// namespace eosio
 
-EOSIO_ABI( emanate::colab, (propose)(approve)(unapprove)(cancel)(exec) )
+EOSIO_ABI( emanate::collab, (propose)(approve)(unapprove)(cancel)(exec) )

@@ -5,16 +5,19 @@
 
 namespace emanate {
     
-    struct colab_data
+    struct collab_data
     {
         account_name name;
-        uint32_t percentage;
-        // std::string file;
+        uint32_t     percentage;
+        std::string  filename;
+        uint32_t     accepted;
 
         bool operator == (account_name n) const { return name == n; }
 
-        EOSLIB_SERIALIZE( colab_data, (name)(percentage) )
+        EOSLIB_SERIALIZE( collab_data, (name)(percentage)(filename)(accepted) )
     };
+
+    typedef eosio::vector<collab_data> approvals_t;
 
     struct transfer
     {
@@ -26,33 +29,30 @@ namespace emanate {
         EOSLIB_SERIALIZE( transfer, (from)(to)(quantity)(memo) )
     };
     
-    class colab : public eosio::contract 
+    class collab : public eosio::contract 
     {
-        public:
-            
-            colab( account_name self ):contract(self){}
+    public:
+        
+        collab( account_name self ):contract(self){}
 
-            void propose(account_name proposer, eosio::name proposal_name, uint32_t price, eosio::vector<colab_data> requested);
-            void approve( account_name proposer, eosio::name proposal_name, account_name approver );
-            void unapprove( account_name proposer, eosio::name proposal_name, account_name unapprover );
-            void cancel( account_name proposer, eosio::name proposal_name, account_name canceler );
-            void exec( account_name proposer, eosio::name proposal_name, account_name executer );
+        void propose(account_name proposer, eosio::name proposal_name, uint32_t price, const std::string &filename, approvals_t requested);
+        void approve( account_name proposer, eosio::name proposal_name, account_name approver );
+        void unapprove( account_name proposer, eosio::name proposal_name, account_name unapprover );
+        void cancel( account_name proposer, eosio::name proposal_name, account_name canceler );
+        void exec( account_name proposer, eosio::name proposal_name, account_name executer, uint32_t seconds );
 
-        private:
-            struct proposal 
-            {
-                eosio::name                     proposal_name;       //  Project name
-                eosio::vector<colab_data>       requested_approvals;
-                eosio::vector<colab_data>       provided_approvals;
-                uint32_t                        price;
-                
-                //  vector<std::string> original_files;     // Original files 
-                //  std::string final_file;                 // Final file
+    private:
+        struct proposal 
+        {
+            eosio::name name;       // Proposal name
+            approvals_t approvals;  // List of approval requests
+            uint32_t    price;      // Price per second
+            std::string filename;   // Final file
 
-                auto primary_key()const { return proposal_name.value; }
-            };
+            auto primary_key()const { return name.value; }
+        };
 
-            typedef eosio::multi_index<N(proposal),proposal> proposals;
+        typedef eosio::multi_index<N(proposal),proposal> proposals;
     };
 
 } /// namespace eosio
