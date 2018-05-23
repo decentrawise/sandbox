@@ -66,33 +66,39 @@ function resultError(data) {
     return { success: false, data: data };
 }
 
-var config = {
-    httpEndpoint: 'http://192.168.1.51:8888',
-    keyProvider: [
-        getKeyPair('emanatecolab').private,
-        getKeyPair('colabuser1').private,
-        getKeyPair('colabuser2').private,
-        getKeyPair('colabuser3').private,
-        getKeyPair('colabuser4').private,
-        getKeyPair('user1').private,
-        getKeyPair('user2').private,
-        getKeyPair('user3').private,
-    ]
+function getEOSConfig() {
+    return {
+        httpEndpoint: 'http://localhost:8888',
+        keyProvider: [
+            getKeyPair('emanatecolab').private,
+            getKeyPair('colabuser1').private,
+            getKeyPair('colabuser2').private,
+            getKeyPair('colabuser3').private,
+            getKeyPair('colabuser4').private,
+            getKeyPair('user1').private,
+            getKeyPair('user2').private,
+            getKeyPair('user3').private,
+        ]
+    }
 }
 
-console.log(config)
+function permissions(user, level) {
+    if (level == null) {
+        level = 'active';
+    }
+    return {account: user, permission: level};
+}
 
+const config = getEOSConfig();
 var eos = Eos.Testnet(config);
 
-// app.use("/api", express.static('/api'));
+app.get('/', (req, res) => res.send('Welcome to the Emanate API<p><a href="/api">Documentation<a/>'))
 
 app.get('/api', function(req, res) {
     res.sendFile(path.join(process.cwd(), 'api.html'));
 });
 
-app.get('/', (req, res) => res.send('Welcome to the Emanate API<p><a href="/api">Documentation<a/>'))
 
-// app.get('/api', (req, res) => res.send('Welcome to the Emanate API'))
 /*
  * {
  *     "from": <colaboration contract creator>
@@ -109,10 +115,10 @@ app.get('/', (req, res) => res.send('Welcome to the Emanate API<p><a href="/api"
  * */
 app.post('/propose', (req, res) => {
     var data = req.body;
-    const options = eosCallOptions(["emanatecolab"], [{account: "emanatecolab", permission: "active"},{account: data.name, permission: "active"}]);
-    
+    const options = eosCallOptions(["emanatecolab"], [permissions("emanatecolab"), permissions(data.name)]);
+
     eos.contract('emanatecolab', options).then(contract => {
-        contract.propose(data.from, data.name, data.price, data.partners).then(function() { 
+        contract.propose(data.from, data.name, data.price, data.filename, data.partners).then(function() { 
             res.send(resultOk()); 
         }).catch(error => {
             res.send(resultError(error));
@@ -134,7 +140,7 @@ app.post('/propose', (req, res) => {
  * */
 app.post('/accept', bodyParser.json(), (req, res) => {
     var data = req.body;
-    const options = eosCallOptions(["emanatecolab"], [{account: "emanatecolab", permission: "active"}]);
+    const options = eosCallOptions(["emanatecolab"], [permissions("emanatecolab")]);
     
     eos.contract('emanatecolab', options).then(contract => {
         contract.approve(data.proposer, data.name, data.from, { authorization: data.from }).then(function() {
@@ -160,7 +166,7 @@ app.post('/accept', bodyParser.json(), (req, res) => {
  * */
 app.post('/reject', (req, res) => {
     var data = req.body;
-    const options = eosCallOptions(["emanatecolab"], [{account: "emanatecolab", permission: "active"}]);
+    const options = eosCallOptions(["emanatecolab"], [permissions("emanatecolab")]);
 
     eos.contract('emanatecolab', options).then(contract => {
         contract.unapprove(data.proposer, data.name, data.from, { authorization: data.from }).then(function() { 
@@ -195,7 +201,8 @@ app.post('/cancel', (req, res) => {
  * */
 app.post('/execute', (req, res) => {
     var data = req.body;
-    const options = eosCallOptions(["emanatecolab"], [{account: "emanatecolab", permission: "active"}]);
+//     const options = eosCallOptions(["emanatecolab"], [{account: "emanatecolab", permission: "active"}]);
+    const options = eosCallOptions(["emanatecolab"], [permissions("emanatecolab")]);
     
     eos.contract('emanatecolab', options).then(contract => {
         contract.exec(data.proposer, data.name, data.from, { authorization: data.from }).then(function() { 
@@ -222,10 +229,13 @@ app.post('/execute', (req, res) => {
  * */
 app.post('/getContract', (req, res) => {
     var data = req.body;
-    var result = { success: true, data: [] };
-    eos.getTableRows(true, 'emanatecolab', data.proposer, 'proposal').then(function(results) {
-        result.data = results
-        res.send(JSON.stringify(result));
+
+    console.log(data);
+    eos.getTableRows(true, 'emanatecolab', data.proposer, 'proposal').then(results => {
+        //  TODO: Go through the results and find the proper contract from this user
+        res.send(resultOk(results));
+    }).catch(error => {
+        res.send(resultError(error));
     });
 })
 

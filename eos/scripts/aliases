@@ -290,11 +290,29 @@ function create_emanate_base
     echo "Creating default colabuser2..."
     account_create eosio colabuser2
 
+    echo "Creating default colabuser3..."
+    account_create eosio colabuser3
+
+    echo "Creating default colabuser4..."
+    account_create eosio colabuser4
+
     echo "Creating default user1..."
     account_create eosio user1
 
+    echo "Creating default user2..."
+    account_create eosio user2
+
+    echo "Creating default user3..."
+    account_create eosio user3
+
     cleos push action eosio.token issue '[ "user1", "100.0000 EOS", "first delivery" ]' -p eosio
     cleos push action eosio.token issue '[ "user1", "100.0000 EMA", "first delivery" ]' -p eosio
+
+    cleos push action eosio.token issue '[ "user2", "200.0000 EOS", "first delivery" ]' -p eosio
+    cleos push action eosio.token issue '[ "user2", "200.0000 EMA", "first delivery" ]' -p eosio
+
+    cleos push action eosio.token issue '[ "user3", "300.0000 EOS", "first delivery" ]' -p eosio
+    cleos push action eosio.token issue '[ "user3", "300.0000 EMA", "first delivery" ]' -p eosio
 
     contract_setup emanatecolab
     contract_install emanatecolab
