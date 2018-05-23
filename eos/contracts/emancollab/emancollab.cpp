@@ -1,4 +1,4 @@
-#include <emanatecolab.hpp>
+#include <emancollab.hpp>
 #include <eosiolib/action.hpp>
 
 namespace emanate {

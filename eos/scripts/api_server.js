@@ -70,11 +70,11 @@ function getEOSConfig() {
     return {
         httpEndpoint: 'http://localhost:8888',
         keyProvider: [
-            getKeyPair('emanatecolab').private,
-            getKeyPair('colabuser1').private,
-            getKeyPair('colabuser2').private,
-            getKeyPair('colabuser3').private,
-            getKeyPair('colabuser4').private,
+            getKeyPair('emancollab').private,
+            getKeyPair('collabuser1').private,
+            getKeyPair('collabuser2').private,
+            getKeyPair('collabuser3').private,
+            getKeyPair('collabuser4').private,
             getKeyPair('user1').private,
             getKeyPair('user2').private,
             getKeyPair('user3').private,
@@ -111,13 +111,13 @@ app.get('/api', function(req, res) {
  * }
  * 
  * http://localhost:85/propose/
- * {"from": "colabuser1", "name": "contract1", "price": 10000, "partners": [{"name": "colabuser2", "percentage": 10}]}
+ * {"from": "collabuser1", "name": "contract1", "price": 10000, "partners": [{"name": "collabuser2", "percentage": 10}]}
  * */
 app.post('/propose', (req, res) => {
     var data = req.body;
-    const options = eosCallOptions(["emanatecolab"], [permissions("emanatecolab"), permissions(data.name)]);
+    const options = eosCallOptions(["emancollab"], [permissions("emancollab"), permissions(data.name)]);
 
-    eos.contract('emanatecolab', options).then(contract => {
+    eos.contract('emancollab', options).then(contract => {
         contract.propose(data.from, data.name, data.price, data.filename, data.partners).then(function() { 
             res.send(resultOk()); 
         }).catch(error => {
@@ -136,13 +136,13 @@ app.post('/propose', (req, res) => {
  * }
  * 
  * http://localhost:85/accept/
- * {"from": "colabuser2", "proposer": "colabuser1", "name": "contract1"}
+ * {"from": "collabuser2", "proposer": "collabuser1", "name": "contract1"}
  * */
 app.post('/accept', bodyParser.json(), (req, res) => {
     var data = req.body;
-    const options = eosCallOptions(["emanatecolab"], [permissions("emanatecolab")]);
+    const options = eosCallOptions(["emancollab"], [permissions("emancollab")]);
     
-    eos.contract('emanatecolab', options).then(contract => {
+    eos.contract('emancollab', options).then(contract => {
         contract.approve(data.proposer, data.name, data.from, { authorization: data.from }).then(function() {
             res.send(resultOk());
         }).catch(error => {
@@ -162,13 +162,13 @@ app.post('/accept', bodyParser.json(), (req, res) => {
  * }
  * 
  * http://localhost:85/reject/
- * {"from": "colabuser2", "proposer": "colabuser1", "name": "contract1"}
+ * {"from": "collabuser2", "proposer": "collabuser1", "name": "contract1"}
  * */
 app.post('/reject', (req, res) => {
     var data = req.body;
-    const options = eosCallOptions(["emanatecolab"], [permissions("emanatecolab")]);
+    const options = eosCallOptions(["emancollab"], [permissions("emancollab")]);
 
-    eos.contract('emanatecolab', options).then(contract => {
+    eos.contract('emancollab', options).then(contract => {
         contract.unapprove(data.proposer, data.name, data.from, { authorization: data.from }).then(function() { 
             res.send(resultOk());
         }).catch(error => {
@@ -201,10 +201,10 @@ app.post('/cancel', (req, res) => {
  * */
 app.post('/execute', (req, res) => {
     var data = req.body;
-//     const options = eosCallOptions(["emanatecolab"], [{account: "emanatecolab", permission: "active"}]);
-    const options = eosCallOptions(["emanatecolab"], [permissions("emanatecolab")]);
+//     const options = eosCallOptions(["emancollab"], [{account: "emancollab", permission: "active"}]);
+    const options = eosCallOptions(["emancollab"], [permissions("emancollab")]);
     
-    eos.contract('emanatecolab', options).then(contract => {
+    eos.contract('emancollab', options).then(contract => {
         contract.exec(data.proposer, data.name, data.from, { authorization: data.from }).then(function() { 
             res.send(resultOk());
         }).catch(error => {
@@ -231,7 +231,7 @@ app.post('/getContract', (req, res) => {
     var data = req.body;
 
     console.log(data);
-    eos.getTableRows(true, 'emanatecolab', data.proposer, 'proposal').then(results => {
+    eos.getTableRows(true, 'emancollab', data.proposer, 'proposal').then(results => {
         //  TODO: Go through the results and find the proper contract from this user
         res.send(resultOk(results));
     }).catch(error => {

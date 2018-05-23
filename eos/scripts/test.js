@@ -214,10 +214,10 @@ cleos.setSystemContract('eosio.token', 'eosio.token');
 cleos.createToken('1000000000.0000 EOS');
 cleos.createToken('1000000000.0000 EMA');
 
-cleos.createAccount('colabuser1');
-cleos.createAccount('colabuser2');
-cleos.createAccount('colabuser3');
-cleos.createAccount('colabuser4');
+cleos.createAccount('collabuser1');
+cleos.createAccount('collabuser2');
+cleos.createAccount('collabuser3');
+cleos.createAccount('collabuser4');
 cleos.createAccount('user1');
 cleos.createAccount('user2');
 cleos.createAccount('user3');
@@ -234,41 +234,41 @@ console.log(cleos.getAccountBalance('user1', 'EMA'));
 console.log(cleos.getAccountBalance('user2', 'EMA'));
 console.log(cleos.getAccountBalance('user3', 'EMA'));
 
-cleos.installContract('emanatecolab');
+cleos.installContract('emancollab');
 
 /*
 var data = {
-    "proposer": "colabuser1", 
+    "proposer": "collabuser1", 
     "proposal_name": "contract1", 
     "price": 10000, 
     "requested": [{ 
-        "name": "colabuser2", 
+        "name": "collabuser2", 
         "percentage": "30" 
     }]
 };
 
-cleos.pushAction('emanatecolab', 'propose', data, ['colabuser1']);
+cleos.pushAction('emancollab', 'propose', data, ['collabuser1']);
 
 data = {
-    "proposer": "colabuser1", 
+    "proposer": "collabuser1", 
     "proposal_name": "contract1", 
-    "approver": "colabuser2"
+    "approver": "collabuser2"
 };
 
-cleos.pushAction('emanatecolab', 'approve', data, ['colabuser1', 'colabuser2']);
+cleos.pushAction('emancollab', 'approve', data, ['collabuser1', 'collabuser2']);
 
 data = {
-    "proposer": "colabuser1", 
+    "proposer": "collabuser1", 
     "proposal_name": "contract1", 
     "executer": "user1"
 };
 
-cleos.pushAction('emanatecolab', 'exec', data, ['user1']);
+cleos.pushAction('emancollab', 'exec', data, ['user1']);
 
 sleep(2);
 
 console.log(cleos.getAccountBalance('user1', 'EMA'));
-console.log(cleos.getAccountBalance('colabuser1', 'EMA'));
-console.log(cleos.getAccountBalance('colabuser2', 'EMA'));
+console.log(cleos.getAccountBalance('collabuser1', 'EMA'));
+console.log(cleos.getAccountBalance('collabuser2', 'EMA'));
 
 */
