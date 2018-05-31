@@ -14,12 +14,17 @@ protocols: [HTTP]
             application/json:
                 example: | 
                     {
-                        "from": "colabuser1", 
-                        "name": "contract1", 
-                        "price": 10000, 
-                        "partners": [
-                            {"name": "colabuser2", 
-                            "percentage": 10}
+                        "from": "colabuser1",           //  name of the account proposing the collaboration
+                        "name": "contract1",            //  name of the contract
+                        "price": 10000,                 //  price per second
+                        "filename": "some_file_name",   //  the result filename of the collaboration
+                        "partners": [                   //  needs at least one parner
+                            {
+                                "name": "colabuser2",           //  name of the collaboration partner account
+                                "percentage": 10                //  percentage of the royalties for this partner
+                                "filename": "filename_needed"   //  filename needed for this collaboration
+                                "accepted": 0                   //  Should be ignored but must exist for now
+                            }
                         ]
                     }
         responses:
@@ -121,6 +126,36 @@ protocols: [HTTP]
                                 "message": "the error message goes here"
                             }
 
+/addTrack:
+    description: "Add a new track for a user"
+    post:
+        description: "Add a new track for a user"
+        body:
+            application/json:
+                example: | 
+                    {
+                        "owner": "collabuser1",                     //  The owner of the track
+                        "metadata":                                 //  All relevant data for the track
+                        {
+                            "trackName": "This is track 3",         //  The name of the track
+                            "artistName": "Look, I'm an artist..."  //  The artist that made this track
+                        }
+                    }
+        responses:
+            200:
+                body:
+                    application/json:
+                        example: |
+                            {
+                                "success": true,
+                                "data": { ... }
+                            }
+                            otherwise
+                            {
+                                "success": false,
+                                "message": "the error message goes here"
+                            }
+                            
 /getContract:
     description: "Get contract details"
     post:
@@ -131,4 +166,15 @@ protocols: [HTTP]
                     {
                         "proposer": "colabuser2", 
                         "contract": "contract1", 
+                    }
+
+/getTracks:
+    description: "Get tracks for this user"
+    post:
+        description: "Get tracks for this user"
+        body:
+            application/json:
+                example: | 
+                    {
+                        "owner": "colabuser2", //   The user that you want to get the tracks from
                     }
