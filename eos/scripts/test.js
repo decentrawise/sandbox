@@ -235,6 +235,7 @@ console.log(cleos.getAccountBalance('user2', 'EMA'));
 console.log(cleos.getAccountBalance('user3', 'EMA'));
 
 cleos.installContract('emancollab');
+cleos.installContract('emancontent');
 
 /*
 var data = {
