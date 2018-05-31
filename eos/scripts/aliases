@@ -284,44 +284,62 @@ function create_emanate_base
 {
     server_initialize
 
-    echo "Creating default colabuser1..."
-    account_create eosio colabuser1
+    echo "Creating default collabuser1..."
+    account_create eosio collabuser1
 
-    echo "Creating default colabuser2..."
-    account_create eosio colabuser2
+    echo "Creating default collabuser2..."
+    account_create eosio collabuser2
+
+    echo "Creating default collabuser3..."
+    account_create eosio collabuser3
+
+    echo "Creating default collabuser4..."
+    account_create eosio collabuser4
 
     echo "Creating default user1..."
     account_create eosio user1
 
+    echo "Creating default user2..."
+    account_create eosio user2
+
+    echo "Creating default user3..."
+    account_create eosio user3
+
     cleos push action eosio.token issue '[ "user1", "100.0000 EOS", "first delivery" ]' -p eosio
     cleos push action eosio.token issue '[ "user1", "100.0000 EMA", "first delivery" ]' -p eosio
 
-    contract_setup emanatecolab
-    contract_install emanatecolab
+    cleos push action eosio.token issue '[ "user2", "200.0000 EOS", "first delivery" ]' -p eosio
+    cleos push action eosio.token issue '[ "user2", "200.0000 EMA", "first delivery" ]' -p eosio
+
+    cleos push action eosio.token issue '[ "user3", "300.0000 EOS", "first delivery" ]' -p eosio
+    cleos push action eosio.token issue '[ "user3", "300.0000 EMA", "first delivery" ]' -p eosio
+
+    contract_setup emancollab
+    contract_install emancollab
 }
 
 function emanate_test_contract
 {
     get_balance user1
-    get_balance colabuser1
-    get_balance colabuser2
+    get_balance collabuser1
+    get_balance collabuser2
 
     echo "Make contract proposal"
-    cleos push action emanatecolab propose '{"proposer": "colabuser1", "proposal_name": "contract1", "price": 10000, "requested": [{ "name": "colabuser2", "percentage": "30" }]}' -p colabuser1
+    cleos push action emancollab propose '{"proposer": "collabuser1", "proposal_name": "contract1", "price": 10000, "requested": [{ "name": "collabuser2", "percentage": "30" }]}' -p collabuser1
     
     echo "Approve proposal"; sleep 1
-    cleos push action emanatecolab approve '{"proposer": "colabuser1", "proposal_name": "contract1", "approver": "colabuser2"}' -p colabuser2 -p colabuser1
+    cleos push action emancollab approve '{"proposer": "collabuser1", "proposal_name": "contract1", "approver": "collabuser2"}' -p collabuser2 -p collabuser1
     echo "Reject proposal"; sleep 1
-    cleos push action emanatecolab unapprove '{"proposer": "colabuser1", "proposal_name": "contract1", "unapprover": "colabuser2"}' -p colabuser2 -p colabuser1
+    cleos push action emancollab unapprove '{"proposer": "collabuser1", "proposal_name": "contract1", "unapprover": "collabuser2"}' -p collabuser2 -p collabuser1
     echo "Approve proposal"; sleep 1
-    cleos push action emanatecolab approve '{"proposer": "colabuser1", "proposal_name": "contract1", "approver": "colabuser2"}' -p colabuser2 -p colabuser1
+    cleos push action emancollab approve '{"proposer": "collabuser1", "proposal_name": "contract1", "approver": "collabuser2"}' -p collabuser2 -p collabuser1
     echo "Execute contract"; sleep 1
-    cleos push action emanatecolab exec '["colabuser1", "contract1", "user1"]' -p user1
+    cleos push action emancollab exec '["collabuser1", "contract1", "user1"]' -p user1
 
     sleep 2
     get_balance user1 EMA
-    get_balance colabuser1 EMA
-    get_balance colabuser2 EMA
+    get_balance collabuser1 EMA
+    get_balance collabuser2 EMA
 }
 
 

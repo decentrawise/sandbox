@@ -9,7 +9,12 @@
   "author": "",
   "license": "ISC",
   "dependencies": {
+    "api-console-cli": "^0.2.12",
     "binaryen": "^37.0.0",
-    "eosjs": "^9.0.1"
+    "body-parser": "^1.18.3",
+    "cors": "^2.8.4",
+    "eosjs": "^9.0.1",
+    "express": "^4.16.3",
+    "unirest": "^0.5.1"
   }
 }

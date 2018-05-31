@@ -1,5 +1,5 @@
 
-project( emanatecolab )
+project( emancollab )
 
 message("CMAKE_CURRENT_BINARY_DIR: ${CMAKE_CURRENT_BINARY_DIR}")
 
