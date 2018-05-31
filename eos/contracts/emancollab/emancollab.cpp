@@ -17,6 +17,10 @@ void collab::propose(account_name proposer, eosio::name proposal_name, uint32_t 
     prints("");
     prints("");
     
+    for ( auto &request : requested ) {
+        request.accepted = false;
+    }
+    
     proptable.emplace( proposer, [&]( auto& prop ) 
     {
         prop.name      = proposal_name;
@@ -83,7 +87,7 @@ void collab::exec( account_name proposer, eosio::name proposal_name, account_nam
     auto trx = eosio::transaction();
     
     uint32_t percentage = 100;
-    uint64_t totalPayment = 10000;
+    uint64_t totalPayment = prop_it->price * seconds;
     for( const collab_data &data : prop_it->approvals ) 
     {
         percentage -= data.percentage;

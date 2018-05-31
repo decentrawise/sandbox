@@ -42,7 +42,7 @@ namespace emanate {
         void exec( account_name proposer, eosio::name proposal_name, account_name executer, uint32_t seconds );
 
     private:
-        struct proposal 
+        struct proposal
         {
             eosio::name name;       // Proposal name
             approvals_t approvals;  // List of approval requests
@@ -50,6 +50,8 @@ namespace emanate {
             std::string filename;   // Final file
 
             auto primary_key()const { return name.value; }
+            
+            EOSLIB_SERIALIZE( proposal, (name)(approvals)(price)(filename) )
         };
 
         typedef eosio::multi_index<N(proposal),proposal> proposals;
